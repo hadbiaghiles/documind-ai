@@ -1,0 +1,19 @@
+# Blueprint for Render Free Web Service
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: documind-ai-backend
+    runtime: docker
+    plan: free
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        value: https://hadbiaghiles.github.io

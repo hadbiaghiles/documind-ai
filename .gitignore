@@ -4,3 +4,13 @@ out
 *.tsbuildinfo
 .env*
 !.env.example
+
+node_modules
+.next
+out
+*.tsbuildinfo
+backend/.venv
+__pycache__/
+.env
+.env.local
+!.env.example
