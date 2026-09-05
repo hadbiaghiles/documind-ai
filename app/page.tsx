@@ -48,6 +48,7 @@ const mockReplies = [
   "The research points to three recurring user needs: less setup friction, more visible progress, and answers grounded in real customer language. This is a demo response — connect a backend to search your live workspace.",
   "Here’s a useful starting point: define the outcome, assign one owner, and link the supporting source beside each task. I can keep helping with mock workspace context."
 ];
+const workspaceHref = `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/workspace`;
 
 export default function Home() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -104,7 +105,7 @@ export default function Home() {
           <div className="eyebrow"><span className="pulse-dot" /> The intelligent workspace for modern teams</div>
           <h1>Think beyond<br /><em>your documents.</em></h1>
           <p className="hero-sub">DocuMind turns your scattered knowledge into a clear, conversational workspace. Ask better questions, move faster, and keep your best thinking in flow.</p>
-          <div className="hero-actions"><a className="button button-primary" href="#dashboard">Explore your workspace <ArrowRight size={16} /></a><a className="text-link" href="#workflow">See how it works <span>↗</span></a></div>
+          <div className="hero-actions"><a className="button button-primary" href={workspaceHref}>Open your workspace <ArrowRight size={16} /></a><a className="text-link" href="#workflow">See how it works <span>↗</span></a></div>
           <div className="hero-proof"><div className="avatar-stack"><span>AL</span><span>JM</span><span>RK</span><span>+2k</span></div><span>Trusted by curious teams everywhere</span><div className="stars">★★★★★</div></div>
         </div>
         <div className="hero-visual container" id="dashboard">
@@ -129,7 +130,7 @@ export default function Home() {
 
       <section className="section faq-section" id="faq"><div className="container faq-layout"><div><div className="eyebrow cyan">Questions, answered</div><h2>Good to<br /><em>know.</em></h2><p>Still curious? We&apos;re happy to help.</p><a className="text-link" href="mailto:hello@documind.ai">Talk to a human <ArrowRight size={15} /></a></div><div className="faq-list">{faqs.map(([question, answer], index) => <div className={`faq-item ${openFaq === index ? "open" : ""}`} key={question}><button onClick={() => setOpenFaq(openFaq === index ? null : index)}><span>{question}</span><ChevronDown size={17} /></button>{openFaq === index && <p>{answer}</p>}</div>)}</div></div></section>
 
-      <section className="cta-section"><div className="cta-orb" /><div className="container cta-inner"><div className="eyebrow">Your next breakthrough is hiding in plain sight.</div><h2>Give your ideas<br /><em>room to connect.</em></h2><a className="button button-primary" href="#dashboard">Build your workspace <ArrowRight size={16} /></a><small>No credit card required · 14-day free trial</small></div></section>
+      <section className="cta-section"><div className="cta-orb" /><div className="container cta-inner"><div className="eyebrow">Your next breakthrough is hiding in plain sight.</div><h2>Give your ideas<br /><em>room to connect.</em></h2><a className="button button-primary" href={workspaceHref}>Build your workspace <ArrowRight size={16} /></a><small>No credit card required · 14-day free trial</small></div></section>
       <footer><div className="container footer-main"><div><a className="brand" href="#"><span className="brand-mark"><Sparkles size={16} /></span><span>docu<span>mind</span></span></a><p>Make your knowledge<br />work harder.</p></div><div className="footer-links"><div><strong>Product</strong><a href="#features">Features</a><a href="#pricing">Pricing</a><a href="#dashboard">Integrations</a></div><div><strong>Company</strong><a href="#workflow">About us</a><a href="#faq">Contact</a><a href="#faq">Careers <small>2</small></a></div><div><strong>Social</strong><a href="#0">Twitter ↗</a><a href="#0">LinkedIn ↗</a><a href="#0">Instagram ↗</a></div></div></div><div className="container footer-bottom"><span>© 2024 DocuMind, Inc.</span><span>Privacy · Terms · Security</span><span>Made for deep work <span className="heart">♥</span></span></div></footer>
     </main>
   );
