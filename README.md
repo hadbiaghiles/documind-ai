@@ -11,6 +11,16 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000). The available checks are `npm run typecheck`, `npm run lint`, and `npm run build`.
 
-## Deployment
+## GitHub Pages deployment
 
-The app is ready for deployment to Vercel: import this repository, keep the default Next.js build settings, and deploy. For another host, run `npm run build` followed by `npm run start` on a Node.js 18.17+ runtime.
+The repository includes `.github/workflows/deploy-pages.yml`, which builds the static export and deploys it to GitHub Pages whenever `main` is updated.
+
+1. In GitHub, open **Settings → Pages**.
+2. Under **Build and deployment**, select **GitHub Actions** as the source.
+3. Push or merge to `main` (or run the workflow manually from the Actions tab).
+
+For this repository, the expected URL is:
+
+`https://hadbiaghiles.github.io/documind-ai/`
+
+The `/documind-ai` base path is applied automatically in GitHub Actions and is not used during local development. The workflow uses the static `out/` export, so no server runtime or environment secrets are required.
