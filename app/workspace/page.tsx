@@ -8,6 +8,7 @@ import {
 import { useRef, useState } from "react";
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
 const sources = [
   ["Q3 Product Brief.pdf", "PDF · 2.4 MB", "violet"],
   ["Research synthesis.docx", "DOCX · 1.1 MB", "cyan"],
@@ -27,6 +28,8 @@ export default function WorkspacePage() {
   const [thinking, setThinking] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [files, setFiles] = useState<string[]>([]);
+  const [live, setLive] = useState(false);
+  const [apiError, setApiError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   const send = (value = message) => {
@@ -35,6 +38,31 @@ export default function WorkspacePage() {
     setMessages((current) => [...current, { id: Date.now(), role: "user", text }]);
     setMessage("");
     setThinking(true);
+    setApiError("");
+    if (apiUrl) {
+      fetch(`${apiUrl}/ask`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: text, workspace_id: "default" })
+      })
+        .then(async (response) => {
+          if (!response.ok) throw new Error((await response.json()).detail || "API request failed");
+          return response.json();
+        })
+        .then((result) => {
+          setMessages((current) => [...current, { id: Date.now() + 1, role: "assistant", text: result.answer }]);
+          setLive(Boolean(result.live));
+        })
+        .catch((error: Error) => {
+          setApiError(error.message);
+          addMockReply();
+        })
+        .finally(() => setThinking(false));
+      return;
+    }
+    addMockReply();
+  };
+  const addMockReply = () => {
     window.setTimeout(() => {
       setMessages((current) => [...current, { id: Date.now() + 1, role: "assistant", text: replies[current.length % replies.length] }]);
       setThinking(false);
@@ -43,6 +71,20 @@ export default function WorkspacePage() {
   const upload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const names = Array.from(event.target.files ?? []).map((file) => file.name);
     setFiles((current) => [...current, ...names]);
+    if (apiUrl) {
+      names.forEach((name) => {
+        const file = Array.from(event.target.files ?? []).find((candidate) => candidate.name === name);
+        if (!file) return;
+        const form = new FormData();
+        form.append("file", file);
+        fetch(`${apiUrl}/documents?workspace_id=default`, { method: "POST", body: form })
+          .then(async (response) => {
+            if (!response.ok) throw new Error((await response.json()).detail || "Upload failed");
+            setLive(true);
+          })
+          .catch((error: Error) => setApiError(error.message));
+      });
+    }
     event.target.value = "";
   };
 
@@ -68,7 +110,8 @@ export default function WorkspacePage() {
         </aside>
         {sidebarOpen && <button className="workspace-scrim" aria-label="Close workspace menu" onClick={() => setSidebarOpen(false)} />}
         <section className="workspace-chat">
-          <div className="assistant-header"><div><span className="status-dot" /> <span>ONLINE · DEMO MODE</span><h1>Workspace assistant</h1><p>Ask questions about your connected documents.</p></div><div className="assistant-actions"><button className="secondary-button" onClick={() => setMessages([])}><Plus size={15} /> New chat</button><button className="icon-button" aria-label="More options"><MoreHorizontal size={19} /></button></div></div>
+          <div className="assistant-header"><div><span className="status-dot" /> <span>{live ? "LIVE RAG API" : "DEMO MODE · API NOT CONFIGURED"}</span><h1>Workspace assistant</h1><p>{live ? "Answers are grounded in your indexed Supabase documents." : "Ask questions about your connected documents. Configure the API for live RAG answers."}</p></div><div className="assistant-actions"><button className="secondary-button" onClick={() => setMessages([])}><Plus size={15} /> New chat</button><button className="icon-button" aria-label="More options"><MoreHorizontal size={19} /></button></div></div>
+          {apiError && <div className="api-error" role="alert">API unavailable: {apiError} Falling back to mock responses.</div>}
           <div className="conversation">
             {messages.length === 0 && <div className="empty-chat"><div className="large-bot-orb"><Bot size={28} /></div><h2>What are you working on?</h2><p>Ask the assistant to synthesize your documents, find patterns, or shape your next idea.</p><div className="prompt-grid"><button onClick={() => send("Summarize the product brief")}><span><FileText size={16} /></span>Summarize the product brief<ArrowUp size={14} /></button><button onClick={() => send("What are our main user insights?")}><span><Search size={16} /></span>Find the main user insights<ArrowUp size={14} /></button><button onClick={() => send("Draft a launch checklist")}><span><Check size={16} /></span>Draft a launch checklist<ArrowUp size={14} /></button></div></div>}
             <div className="workspace-messages">{messages.map((item) => <div className={`workspace-message ${item.role}`} key={item.id}>{item.role === "assistant" && <span className="message-avatar"><Sparkles size={12} /></span>}<div><p>{item.text}</p><small>{item.role === "assistant" ? "Demo assistant · mock response" : "You · just now"}</small></div></div>)}{thinking && <div className="thinking"><span /><span /><span /> Assistant is thinking…</div>}</div>
