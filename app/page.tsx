@@ -22,7 +22,7 @@ import {
   X,
   Zap
 } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 const sources = [
   { name: "Q3 Product Brief.pdf", meta: "Updated 2h ago", color: "violet", icon: FileText },
@@ -36,16 +36,49 @@ const faqs = [
   ["Can I try it with my team?", "Absolutely. The Starter plan includes a 14-day free trial with unlimited teammates, so you can feel the difference before making a decision."]
 ];
 
+type ChatMessage = {
+  id: number;
+  role: "user" | "assistant";
+  text: string;
+  source?: string;
+};
+
+const mockReplies = [
+  "I found the strongest themes across your connected sources: faster onboarding, clearer ownership, and tighter feedback loops. I can turn those into a brief or a launch checklist next.",
+  "The research points to three recurring user needs: less setup friction, more visible progress, and answers grounded in real customer language. This is a demo response — connect a backend to search your live workspace.",
+  "Here’s a useful starting point: define the outcome, assign one owner, and link the supporting source beside each task. I can keep helping with mock workspace context."
+];
+
 export default function Home() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [message, setMessage] = useState("");
-  const [sent, setSent] = useState(false);
+  const [isThinking, setIsThinking] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const sendMessage = () => {
-    if (!message.trim()) return;
-    setSent(true);
+  const sendMessage = (text = message) => {
+    const trimmed = text.trim();
+    if (!trimmed || isThinking) return;
+    setMessages((current) => [...current, { id: Date.now(), role: "user", text: trimmed }]);
     setMessage("");
+    setIsThinking(true);
+    window.setTimeout(() => {
+      setMessages((current) => [...current, {
+        id: Date.now() + 1,
+        role: "assistant",
+        text: mockReplies[current.length % mockReplies.length],
+        source: "Demo assistant · mock response"
+      }]);
+      setIsThinking(false);
+    }, 650);
+  };
+
+  const handleUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const names = Array.from(event.target.files ?? []).map((file) => file.name);
+    if (names.length) setUploadedFiles((current) => [...current, ...names]);
+    event.target.value = "";
   };
 
   return (
@@ -79,8 +112,8 @@ export default function Home() {
             <div className="window-top"><div className="window-dots"><i /><i /><i /></div><div className="window-title"><span className="mini-logo"><Sparkles size={10} /></span> Acme workspace <ChevronDown size={12} /></div><div className="window-tools"><Search size={14} /><MoreHorizontal size={16} /></div></div>
             <div className="dashboard-body">
               <aside className="workspace-sidebar"><div className="side-workspace"><span className="workspace-avatar">A</span><div><strong>Acme Inc.</strong><small>Pro workspace</small></div><ChevronDown size={13} /></div><div className="side-label">Workspace</div><div className="side-item active"><LayoutDashboard size={15} /> Overview</div><div className="side-item"><MessageSquare size={15} /> Conversations <b>3</b></div><div className="side-item"><FolderOpen size={15} /> Collections</div><div className="side-item"><Users size={15} /> Team members</div><div className="side-label sources-label">Your sources</div>{sources.map((source) => <div className="side-source" key={source.name}><span className={`source-icon ${source.color}`}><source.icon size={13} /></span>{source.name.split(".")[0]}<MoreHorizontal size={13} /></div>)}<div className="side-bottom"><div className="upgrade-card"><Zap size={14} /><span><strong>Unlock more magic</strong><small>Upgrade your plan</small></span><ArrowRight size={13} /></div><div className="profile"><span className="profile-avatar">JD</span><span>Jordan Davis</span><MoreHorizontal size={14} /></div></div></aside>
-              <section className="chat-area"><div className="chat-header"><div><small>CONVERSATION</small><h3>Untitled conversation</h3></div><button className="icon-button"><MoreHorizontal size={17} /></button></div><div className="chat-scroll"><div className="welcome"><div className="bot-orb"><Sparkles size={21} /></div><h2>How can I help you today?</h2><p>Ask questions about your workspace or let me connect the dots.</p></div><div className="suggestions"><button>Summarize the product brief <ArrowRight size={13} /></button><button>What are our main user insights? <ArrowRight size={13} /></button><button>Draft a launch checklist <ArrowRight size={13} /></button></div>{sent && <div className="chat-message user-message">Can you find the key takeaways from my sources?<small>Just now</small></div>}<div className="input-wrap"><textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Ask anything about your workspace..." rows={1} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }} /><div className="input-actions"><button className="attach"><Paperclip size={16} /></button><span>Press ⌘ + Enter</span><button className="send-button" onClick={sendMessage} aria-label="Send message"><Send size={15} /></button></div></div></div></section>
-              <aside className="insight-panel"><div className="insight-head"><span>CONTEXT</span><button className="icon-button"><X size={14} /></button></div><div className="context-card"><div className="context-top"><span className="sparkle-small"><Sparkles size={14} /></span><span>AI GENERATED</span></div><h4>Workspace insights</h4><p>Based on 23 sources in your workspace</p><div className="insight-stat"><strong>86<span>%</span></strong><span>context coverage</span></div><div className="progress"><i /></div><div className="insight-foot"><span><Check size={12} /> 12 sources connected</span><ArrowRight size={13} /></div></div><div className="context-list"><small>RELEVANT SOURCES</small>{sources.map((source) => <div className="context-source" key={source.name}><span className={`source-icon ${source.color}`}><source.icon size={13} /></span><span><strong>{source.name}</strong><small>{source.meta}</small></span><span className="relevance">92%</span></div>)}</div><div className="dropzone"><CloudUpload size={17} /><strong>Drop files here</strong><small>or click to browse</small></div></aside>
+              <section className="chat-area" aria-label="Document assistant demo"><div className="chat-header"><div><small>CONVERSATION · DEMO MODE</small><h3>Workspace assistant</h3></div><button className="icon-button" aria-label="More conversation options"><MoreHorizontal size={17} /></button></div><div className="chat-scroll"><div className="welcome"><div className="bot-orb"><Bot size={21} /></div><h2>How can I help you today?</h2><p>Ask about your workspace and get a clearly labeled demo response.</p></div><div className="suggestions"><button onClick={() => sendMessage("Summarize the product brief")}>Summarize the product brief <ArrowRight size={13} /></button><button onClick={() => sendMessage("What are our main user insights?")}>What are our main user insights? <ArrowRight size={13} /></button><button onClick={() => sendMessage("Draft a launch checklist")}>Draft a launch checklist <ArrowRight size={13} /></button></div><div className="messages" aria-live="polite">{messages.map((item) => <div className={`chat-message ${item.role === "user" ? "user-message" : "assistant-message"}`} key={item.id}>{item.role === "assistant" && <span className="message-avatar"><Sparkles size={11} /></span>}<div><p>{item.text}</p>{item.source ? <small>{item.source}</small> : <small>Just now</small>}</div></div>)}{isThinking && <div className="thinking"><span /><span /><span /> Assistant is thinking…</div>}</div><form className="input-wrap" onSubmit={(event) => { event.preventDefault(); sendMessage(); }}><textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Ask anything about your workspace..." rows={2} aria-label="Message the document assistant" onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }} /><div className="input-actions"><button className="attach" type="button" aria-label="Upload a document" onClick={() => fileInputRef.current?.click()}><Paperclip size={16} /></button><input ref={fileInputRef} className="visually-hidden" type="file" accept=".pdf,.doc,.docx,.txt,.md" multiple onChange={handleUpload} /><span>Enter to send · Shift + Enter for a new line</span><button className="send-button" type="submit" disabled={!message.trim() || isThinking} aria-label="Send message"><Send size={15} /></button></div></form></div></section>
+              <aside className="insight-panel"><div className="insight-head"><span>CONTEXT</span><button className="icon-button" aria-label="Close context panel"><X size={14} /></button></div><div className="context-card"><div className="context-top"><span className="sparkle-small"><Sparkles size={14} /></span><span>AI GENERATED</span></div><h4>Workspace insights</h4><p>Based on 23 sources in your workspace</p><div className="insight-stat"><strong>86<span>%</span></strong><span>context coverage</span></div><div className="progress"><i /></div><div className="insight-foot"><span><Check size={12} /> 12 sources connected</span><ArrowRight size={13} /></div></div><div className="context-list"><small>RELEVANT SOURCES</small>{sources.map((source) => <div className="context-source" key={source.name}><span className={`source-icon ${source.color}`}><source.icon size={13} /></span><span><strong>{source.name}</strong><small>{source.meta}</small></span><span className="relevance">92%</span></div>)}</div><button className="dropzone" type="button" onClick={() => fileInputRef.current?.click()}><CloudUpload size={17} /><strong>Drop files here</strong><small>or click to browse</small>{uploadedFiles.length > 0 && <span className="uploaded-count">{uploadedFiles.length} file{uploadedFiles.length === 1 ? "" : "s"} staged for demo</span>}</button></aside>
             </div>
           </div>
         </div>
